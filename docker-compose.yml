@@ -1,0 +1,69 @@
+version: '3.8'
+services:
+  vprodb:
+    build:
+      context: ./Docker-files/db
+      dockerfile: Dockerfile
+    image: damtrix25/vprofiledb
+    container_name: vprodb
+    ports:
+      - '3306:3306'
+    volumes:
+      - vprodbdata:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=vprodbpass
+
+  vprocache01:
+    image: memcached
+    ports:
+      - '11211:11211'
+
+  vpromq01:
+    image: rabbitmq
+    ports:
+      - '15672:15672'
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+
+  vproapp:
+    build:
+      context: ./Docker-files/app
+      dockerfile: Dockerfile
+    image: damtrix25/vprofileapp
+    container_name: vproapp
+    ports:
+      - '8080:8080'
+    volumes:
+      - vproappdata:/usr/local/tomcat/webapps
+    # depends_on:
+    #   - vprodb
+    #   - vprocache01
+    #   - vpromq01
+    # environment:
+    #   - SPRING_DATASOURCE_URL=jdbc:mysql://vprodb:3306/vprodb
+    #   - SPRING_DATASOURCE_USERNAME=root
+    #   - SPRING_DATASOURCE_PASSWORD=vprodbpass
+    #   - SPRING_CACHE_HOST=vprocache01
+    #   - SPRING_CACHE_PORT=11211
+    #   - SPRING_RABBITMQ_HOST=vpromq01
+    #   - SPRING_RABBITMQ_PORT=5672
+    #   - SPRING_RABBITMQ_USERNAME=guest
+    #   - SPRING_RABBITMQ_PASSWORD=guest
+
+  vproweb:
+    build:
+      context: ./Docker-files/web
+      dockerfile: Dockerfile
+    image: damtrix25/vprofileweb
+    container_name: vproweb
+    ports:
+      - '80:80'
+    # depends_on:
+    #   - vproapp
+    # environment:
+    #   - VPRO_APP_URL=http://vproapp:8080
+
+volumes:
+  vprodbdata: {}
+  vproappdata: {}
